@@ -5,7 +5,6 @@
 
 import itchat
 from itchat.content import *
-from collections import deque
 
 
 WAKEN_MSG = [u"小冰", u"小冰小冰", u"小冰呢", u"小冰呢？", u"小冰回来", u"小冰出来"]
@@ -34,7 +33,7 @@ def handle_outgoing_msg(msg, to_user, from_user):
 
 
 def handle_incoming_msg(msg, to_user, from_user):
-    global contact_queue, last_contact
+    global last_asker_id_name
 
     debug_print(u'I received a message {} from {}'.format(msg['Text'], get_user_display_name(from_user)))
     if msg['Content'] in TRIGGER_MSG:
@@ -42,8 +41,7 @@ def handle_incoming_msg(msg, to_user, from_user):
     else:  # don't ask xiaobing with trigger question
         if msg['FromUserName'] in peer_list:
             debug_print(u'Robot reply is on for {}! Asking xiaobing...'.format(get_user_display_name(from_user)))
-            contact_queue.append(msg['FromUserName'])
-            last_contact = msg['FromUserName']
+            last_asker_id_name = msg['FromUserName']
             ask_xiaobing(msg)
 
 
@@ -84,23 +82,20 @@ def map_reply(msg):
 
 
 def handle_xiaobing_reply(msg):
-    global contact_queue, last_contact
+    global last_asker_id_name
 
-    if not last_contact:
+    if not last_asker_id_name:
         debug_print('Xiaobing replied but has no one to contact')
         return
 
-    # allow xiaobing to send multiple replies to the last contact
-    asker_id_name = contact_queue.popleft() if len(contact_queue) > 0 else last_contact
-    asker = itchat.search_friends(userName=asker_id_name)
-
+    asker = itchat.search_friends(userName=last_asker_id_name)
     if msg['Type'] == 'Picture':
         debug_print(u'xiaobing replied a picture. Relaying to {}'.format(get_user_display_name(asker)))
-        itchat.send_msg(u'小冰: 看图', asker_id_name)
-        send_img(msg, asker_id_name)
+        itchat.send_msg(u'小冰: 看图', last_asker_id_name)
+        send_img(msg, last_asker_id_name)
     else:
         debug_print(u'xiaobing replied {}. Relaying to {}'.format(msg['Text'], get_user_display_name(asker)))
-        itchat.send_msg(u'小冰: {}'.format(msg['Text']), asker_id_name)
+        itchat.send_msg(u'小冰: {}'.format(msg['Text']), last_asker_id_name)
 
 # --------------------------------------------- Helper Functions ---------------------------------------------------
 
@@ -141,8 +136,7 @@ if __name__ == '__main__':
     xiao_bing_user_name = itchat.search_mps(name=u'小冰')[0]["UserName"]
 
     peer_list = set()
-    contact_queue = deque()
-    last_contact = None
+    last_asker_id_name = None
     debug = True
 
     itchat.run()
