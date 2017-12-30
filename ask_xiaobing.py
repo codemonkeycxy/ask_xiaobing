@@ -31,7 +31,7 @@ def handle_robot_switch(incoming_msg, outgoing_msg_target_user):
     display_name = get_user_display_name(outgoing_msg_target_user)
     user_id_name = outgoing_msg_target_user['UserName']
 
-    if incoming_msg['Content'] in [u"小冰", u"小冰小冰", u"小冰呢", u"小冰呢？", u"小冰回来"]:
+    if incoming_msg['Content'] in [u"小冰", u"小冰小冰", u"小冰呢", u"小冰呢？", u"小冰回来", u"小冰出来"]:
         if user_id_name not in peer_list:
             debug_print(u'Turning on robot for {}'.format(display_name))
             peer_list.add(user_id_name)
