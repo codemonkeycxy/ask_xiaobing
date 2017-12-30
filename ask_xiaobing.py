@@ -21,7 +21,7 @@ def send_img(msg, user_name):
 
 def ask_xiaobing(msg):
     if msg['Type'] == 'Picture':
-        send_image(msg, xiao_bing_user_name)
+        send_img(msg, xiao_bing_user_name)
     else:
         itchat.send_msg(msg['Text'], xiao_bing_user_name)
 
