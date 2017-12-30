@@ -60,7 +60,9 @@ def handle_robot_switch(incoming_msg, outgoing_msg_target_user):
             debug_print(u'Robot is already turned off for {}'.format(display_name))
 
 
-def handle_xiaobing_reply():
+def handle_xiaobing_reply(msg):
+    global message_queue
+
     if len(message_queue) == 0:
         debug_print('Xiaobing replied but has no one to contact')
         return
@@ -71,7 +73,7 @@ def handle_xiaobing_reply():
     if msg['Type'] == 'Picture':
         debug_print(u'xiaobing replied a picture. Relaying to {}'.format(get_user_display_name(asker)))
         itchat.send_msg(u'小冰: 看图', asker_id_name)
-        send_image(msg, asker_id_name)
+        send_img(msg, asker_id_name)
     else:
         debug_print(u'xiaobing replied {}. Relaying to {}'.format(msg['Text'], get_user_display_name(asker)))
         itchat.send_msg(u'小冰: {}'.format(msg['Text']), asker_id_name)
@@ -105,7 +107,7 @@ def text_reply(msg):
 @itchat.msg_register([TEXT, PICTURE], isMpChat=True)
 def map_reply(msg):
     if msg['FromUserName'] == xiao_bing_user_name:
-        handle_xiaobing_reply()
+        handle_xiaobing_reply(msg)
 
 
 if __name__ == '__main__':
