@@ -43,14 +43,14 @@ def handle_incoming_msg(msg, to_user, from_user):
     if msg['Content'] in TRIGGER_MSG:
         handle_robot_switch(msg, from_user)
     else:  # don't ask xiaobing with trigger question
-        if msg['FrontUserName'] in peer_list:
+        if msg['FromUserName'] in peer_list:
             handle_message_queue(msg, from_user)
 
 
 def handle_message_queue(msg, from_user):
     global message_queue
 
-    from_user_id_name = msg['FrontUserName']
+    from_user_id_name = msg['FromUserName']
     from_user_display_name = get_user_display_name(from_user)
     debug_print(u'Robot reply is on for {}! Adding message to queue...'.format(from_user_display_name))
 
