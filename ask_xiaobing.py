@@ -179,7 +179,9 @@ def get_user_display_name(user=None, user_id_name=None):
     if user:
         return user['RemarkName'] or user['NickName'] or user['Name']
     elif user_id_name:
-        return get_user_display_name(user=itchat.search_friends(userName=user_id_name)[0])
+        # return get_user_display_name(user=itchat.search_friends(userName=user_id_name)[0])
+        # TODO to fix
+        return user_id_name
     else:
         return 'user not found'
 
