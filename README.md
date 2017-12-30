@@ -7,8 +7,7 @@ WeChat bot powered by MS XiaoBing (小冰)
 
 快速入门：
 1. 微信关注小冰公众号
-2. 在电脑上安装python （mac: `brew install python`）
-3. 下载[本文件](https://github.com/codemonkeycxy/ask_xiaobing/blob/master/dist/ask_xiaobing)并运行
+2. 下载[本文件](https://github.com/codemonkeycxy/ask_xiaobing/blob/master/dist/ask_xiaobing)为.exe文件并运行
 
 综合借鉴了下面这些资源：
 1. https://github.com/Lafree317/PythonChat/blob/master/chat.py （在此版本上增加了contact queue，减少多人同时和小冰聊天时的bug）
