@@ -1,8 +1,8 @@
+# coding=utf8
 # 使用前需关注小冰公众号
 # inspired by: https://github.com/Lafree317/PythonChat/blob/master/chat.py
 # also referred to: https://zhuanlan.zhihu.com/p/30899907
 
-# coding=utf8
 import itchat
 from itchat.content import *
 from collections import deque
