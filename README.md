@@ -14,4 +14,4 @@ WeChat bot powered by MS XiaoBing (小冰)
 1. https://github.com/Lafree317/PythonChat/blob/master/chat.py （在此版本上增加了contact queue，减少多人同时和小冰聊天时的bug）
 2. https://zhuanlan.zhihu.com/p/30899907
 
-小冰目前还不能回传语音
+本小冰目前还不能回传语音
