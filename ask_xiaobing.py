@@ -89,28 +89,36 @@ def is_my_outgoing_msg(msg):
     return msg['FromUserName'] == my_user_name
 
 
+def handle_outgoing_msg(msg, to_user, from_user):
+    debug_print(u'I sent a message {} to {}'.format(msg['Text'], get_user_display_name(to_user)))
+    if msg['Content'] in TRIGGER_MSG:
+        handle_robot_switch(msg, to_user)
+
+
+def handle_incoming_msg(msg, to_user, from_user):
+    global contact_queue, last_contact
+
+    debug_print(u'I received a message {} from {}'.format(msg['Text'], get_user_display_name(from_user)))
+    if msg['Content'] in TRIGGER_MSG:
+        handle_robot_switch(msg, from_user)
+    else:  # don't ask xiaobing with trigger question
+        if msg['FromUserName'] in peer_list:
+            debug_print(u'Robot reply is on for {}! Asking xiaobing...'.format(get_user_display_name(from_user)))
+            contact_queue.append(msg['FromUserName'])
+            last_contact = msg['FromUserName']
+            ask_xiaobing(msg)
+
+
 # handle robot switch and friends messages
 @itchat.msg_register([TEXT, PICTURE], isFriendChat=True)
 def text_reply(msg):
-    global peer_list, contact_queue, last_contact
-
     to_user = itchat.search_friends(userName=msg['ToUserName'])
     from_user = itchat.search_friends(userName=msg['FromUserName'])
 
     if is_my_outgoing_msg(msg):
-        debug_print(u'I sent a message {} to {}'.format(msg['Text'], get_user_display_name(to_user)))
-        if msg['Content'] in TRIGGER_MSG:
-            handle_robot_switch(msg, to_user)
+        handle_outgoing_msg(msg, to_user, from_user)
     else:  # this is an incoming message from my friend
-        debug_print(u'I received a message {} from {}'.format(msg['Text'], get_user_display_name(from_user)))
-        if msg['Content'] in TRIGGER_MSG:
-            handle_robot_switch(msg, from_user)
-        else:  # don't ask xiaobing with trigger question
-            if msg['FromUserName'] in peer_list:
-                debug_print(u'Robot reply is on for {}! Asking xiaobing...'.format(get_user_display_name(from_user)))
-                contact_queue.append(msg['FromUserName'])
-                last_contact = msg['FromUserName']
-                ask_xiaobing(msg)
+        handle_incoming_msg(msg, to_user, from_user)
 
 
 # relay back xiaobing's response
