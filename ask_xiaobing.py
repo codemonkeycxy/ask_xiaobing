@@ -5,6 +5,7 @@
 # coding=utf8
 import itchat
 from itchat.content import *
+from collections import deque
 
 
 def debug_print(msg):
@@ -20,9 +21,9 @@ def send_img(msg, user_name):
 
 def ask_xiaobing(msg):
     if msg['Type'] == 'Picture':
-        send_image(msg, xiaobingUserName)
+        send_image(msg, xiao_bing_user_name)
     else:
-        itchat.send_msg(msg['Text'], xiaobingUserName)
+        itchat.send_msg(msg['Text'], xiao_bing_user_name)
 
 
 def get_user_display_name(user):
@@ -60,26 +61,30 @@ def handle_robot_switch(incoming_msg, outgoing_msg_target_user):
 
 
 def handle_xiaobing_reply():
-    global whosasking
-    
-    asker = itchat.search_friends(userName=whosasking)
+    if len(message_queue) == 0:
+        debug_print('Xiaobing replied but has no one to contact')
+        return
+
+    asker_id_name = message_queue.popleft()
+    asker = itchat.search_friends(userName=asker_id_name)
+
     if msg['Type'] == 'Picture':
         debug_print(u'xiaobing replied a picture. Relaying to {}'.format(get_user_display_name(asker)))
-        itchat.send_msg(u'小冰: 看图', whosasking)
-        send_image(msg, whosasking)
+        itchat.send_msg(u'小冰: 看图', asker_id_name)
+        send_image(msg, asker_id_name)
     else:
         debug_print(u'xiaobing replied {}. Relaying to {}'.format(msg['Text'], get_user_display_name(asker)))
-        itchat.send_msg(u'小冰: {}'.format(msg['Text']), whosasking)
+        itchat.send_msg(u'小冰: {}'.format(msg['Text']), asker_id_name)
 
 
 def is_my_outgoing_msg(msg):
-    return msg['FromUserName'] == myUserName
+    return msg['FromUserName'] == my_user_name
 
 
 # handle robot switch and friends messages
 @itchat.msg_register([TEXT, PICTURE], isFriendChat=True)
 def text_reply(msg):
-    global peer_list, whosasking
+    global peer_list, message_queue
 
     to_user = itchat.search_friends(userName=msg['ToUserName'])
     from_user = itchat.search_friends(userName=msg['FromUserName'])
@@ -92,27 +97,25 @@ def text_reply(msg):
         debug_print(u'I received a message {} from {}'.format(msg['Text'], get_user_display_name(from_user)))
         if msg['FromUserName'] in peer_list:
             debug_print(u'Robot reply is on for {}! Asking xiaobing...'.format(get_user_display_name(from_user)))
-            whosasking = msg['FromUserName']
+            message_queue.append(msg['FromUserName'])
             ask_xiaobing(msg)
 
 
 # relay back xiaobing's response
 @itchat.msg_register([TEXT, PICTURE], isMpChat=True)
 def map_reply(msg):
-    global whosasking
-
-    if whosasking and msg['FromUserName'] == xiaobingUserName:
+    if msg['FromUserName'] == xiao_bing_user_name:
         handle_xiaobing_reply()
 
 
 if __name__ == '__main__':
     itchat.auto_login()
 
-    myUserName = itchat.get_friends(update=True)[0]["UserName"]
-    xiaobingUserName = itchat.search_mps(name=u'小冰')[0]["UserName"]
+    my_user_name = itchat.get_friends(update=True)[0]["UserName"]
+    xiao_bing_user_name = itchat.search_mps(name=u'小冰')[0]["UserName"]
 
     peer_list = set()
-    whosasking = None
+    message_queue = deque()
     debug = True
 
     itchat.run()
