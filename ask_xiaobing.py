@@ -44,7 +44,7 @@ def get_user_display_name(user):
 
 # to turn robot on/off
 def handle_robot_switch(incoming_msg, outgoing_msg_target_user):
-    global peer_list
+    global peer_list, contact_queue, last_contact
 
     if not outgoing_msg_target_user:
         debug_print(u'Outgoing message target user not recognized. Can\'t turn on/off robot')
@@ -63,21 +63,26 @@ def handle_robot_switch(incoming_msg, outgoing_msg_target_user):
     elif incoming_msg['Content'] in HIBERNATE_MSG:
         if user_id_name in peer_list:
             debug_print(u'Turning off robot for {}'.format(display_name))
+
             peer_list.remove(user_id_name)
+            # avoid sending further messages when user opts out
+            last_contact = None if last_contact == user_id_name else last_contact
+            contact_queue = deque([contact for contact in contact_queue if contact != user_id_name])
+
             itchat.send_msg(u'小冰: (默默走开>.<)', user_id_name)
         else:
             debug_print(u'Robot is already turned off for {}'.format(display_name))
 
 
 def handle_xiaobing_reply(msg):
-    global message_queue, last_contact
+    global contact_queue, last_contact
 
     if not last_contact:
         debug_print('Xiaobing replied but has no one to contact')
         return
 
     # allow xiaobing to send multiple replies to the last contact
-    asker_id_name = message_queue.popleft() if len(message_queue) > 0 else last_contact
+    asker_id_name = contact_queue.popleft() if len(contact_queue) > 0 else last_contact
     asker = itchat.search_friends(userName=asker_id_name)
 
     if msg['Type'] == 'Picture':
@@ -96,7 +101,7 @@ def is_my_outgoing_msg(msg):
 # handle robot switch and friends messages
 @itchat.msg_register([TEXT, PICTURE], isFriendChat=True)
 def text_reply(msg):
-    global peer_list, message_queue, last_contact
+    global peer_list, contact_queue, last_contact
 
     to_user = itchat.search_friends(userName=msg['ToUserName'])
     from_user = itchat.search_friends(userName=msg['FromUserName'])
@@ -109,7 +114,7 @@ def text_reply(msg):
         debug_print(u'I received a message {} from {}'.format(msg['Text'], get_user_display_name(from_user)))
         if msg['FromUserName'] in peer_list:
             debug_print(u'Robot reply is on for {}! Asking xiaobing...'.format(get_user_display_name(from_user)))
-            message_queue.append(msg['FromUserName'])
+            contact_queue.append(msg['FromUserName'])
             last_contact = msg['FromUserName']
             ask_xiaobing(msg)
 
@@ -128,7 +133,7 @@ if __name__ == '__main__':
     xiao_bing_user_name = itchat.search_mps(name=u'小冰')[0]["UserName"]
 
     peer_list = set()
-    message_queue = deque()
+    contact_queue = deque()
     last_contact = None
     debug = True
 
