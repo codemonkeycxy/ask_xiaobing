@@ -1,9 +1,13 @@
 # ask_xiaobing
-WeChat bot powered by MS XiaoBing (小冰)
+WeChat bot powered by MS XiaoBing (小冰) 一个简单的微信自动回复机器人
 
-一个简单的微信自动回复机器人：
+人机对话：
 
 ![webp net-resizeimage 2](https://user-images.githubusercontent.com/32557706/34453150-0cc4b506-ed01-11e7-86d3-e705e12e8bc8.jpg)
+
+两只小冰左右互搏：
+
+![webp net-resizeimage 3](https://user-images.githubusercontent.com/32557706/34457303-6f47b902-ed61-11e7-9e00-62a575ad9faa.jpg)
 
 快速入门（非开发者)：
 1. 微信关注小冰公众号 (普通小冰公众号只支持纯文字，需[领养一只小冰](http://www.msxiaoice.com/)之后才能识图哦)
