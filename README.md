@@ -6,6 +6,8 @@ WeChat bot powered by MS XiaoBing (小冰) 一个简单的微信自动回复机�
 2. 下载运行文件，打开并扫码：
     - windows: [链接](https://github.com/codemonkeycxy/ask_xiaobing/blob/master/dist/ask_xiaobing_win-64.exe)
     - mac: [链接](https://github.com/codemonkeycxy/ask_xiaobing/blob/master/dist/ask_xiaobing)
+3. 小冰唤醒方式：在对话中输入下列任意 ["小冰", "小冰小冰", "小冰呢", "小冰呢？", "小冰回来", "小冰出来"]
+4. 小冰休眠方式：在对话中输入下列任意 ["小冰住嘴", "小冰闭嘴", "滚", "你滚", "你闭嘴", "下去吧", "小冰下去", "小冰退下"]
 
 快速入门（开发者）：
 1. 微信关注小冰公众号 (普通小冰公众号只支持纯文字，需[领养一只小冰](http://www.msxiaoice.com/)之后才能识图哦)
