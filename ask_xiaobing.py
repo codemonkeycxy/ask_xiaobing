@@ -29,6 +29,17 @@ def text_reply(msg):
     else:  # this is an incoming message from my friend
         handle_incoming_msg(msg, to_user, from_user)
 
+@itchat.msg_register([TEXT,PICTURE], isGroupChat = True)
+def group_reply(msg):
+    fromUserName = msg['FromUserName']
+    print(fromUserName)
+    group = itchat.search_chatrooms(userName=fromUserName)
+    if is_my_outgoing_msg(msg):
+    else:
+    print(group['NickName'] + u"群的 " + msg['ActualNickName'] + u" 发来的消息\n" + msg['Content'] )
+    if msg['isAt'] == True:
+        itchat.send_msg(u'小冰: {}'.format("Happy new year!"), fromUserName)
+
 
 def handle_outgoing_msg(msg, to_user, from_user):
     debug_print(u'I sent a message {} to {}'.format(msg['Text'], get_user_display_name(to_user)))
