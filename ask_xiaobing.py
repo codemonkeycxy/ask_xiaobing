@@ -61,13 +61,14 @@ def handle_robot_switch(incoming_msg, outgoing_msg_target_user):
 
 
 def handle_xiaobing_reply(msg):
-    global message_queue
+    global message_queue, last_contact
 
-    if len(message_queue) == 0:
+    if not last_contact:
         debug_print('Xiaobing replied but has no one to contact')
         return
 
-    asker_id_name = message_queue.popleft()
+    # allow xiaobing to send multiple replies to the last contact
+    asker_id_name = message_queue.popleft() if len(message_queue) > 0 else last_contact
     asker = itchat.search_friends(userName=asker_id_name)
 
     if msg['Type'] == 'Picture':
@@ -86,7 +87,7 @@ def is_my_outgoing_msg(msg):
 # handle robot switch and friends messages
 @itchat.msg_register([TEXT, PICTURE], isFriendChat=True)
 def text_reply(msg):
-    global peer_list, message_queue
+    global peer_list, message_queue, last_contact
 
     to_user = itchat.search_friends(userName=msg['ToUserName'])
     from_user = itchat.search_friends(userName=msg['FromUserName'])
@@ -100,6 +101,7 @@ def text_reply(msg):
         if msg['FromUserName'] in peer_list:
             debug_print(u'Robot reply is on for {}! Asking xiaobing...'.format(get_user_display_name(from_user)))
             message_queue.append(msg['FromUserName'])
+            last_contact = msg['FromUserName']
             ask_xiaobing(msg)
 
 
@@ -118,6 +120,7 @@ if __name__ == '__main__':
 
     peer_list = set()
     message_queue = deque()
+    last_contact = None
     debug = True
 
     itchat.run()
