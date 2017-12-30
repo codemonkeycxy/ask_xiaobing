@@ -3,13 +3,17 @@
 # inspired by: https://github.com/Lafree317/PythonChat/blob/master/chat.py
 # also referred to: https://zhuanlan.zhihu.com/p/30899907
 
+from __future__ import print_function
+from threading import Timer
 import itchat
+import datetime
 from itchat.content import *
-
+from collections import deque
 
 WAKEN_MSG = [u"小冰", u"小冰小冰", u"小冰呢", u"小冰呢？", u"小冰回来", u"小冰出来"]
-HIBERNATE_MSG = [u"小冰住嘴", u"小冰闭嘴", u"滚", u"你滚", u"你闭嘴", u"下去吧"]
+HIBERNATE_MSG = [u"小冰住嘴", u"小冰闭嘴", u"滚", u"你滚", u"你闭嘴", u"下去吧", u"小冰下去", u"小冰退下"]
 TRIGGER_MSG = WAKEN_MSG + HIBERNATE_MSG
+
 
 # --------------------------------------------- Handle Friend Chat ---------------------------------------------------
 
@@ -33,16 +37,38 @@ def handle_outgoing_msg(msg, to_user, from_user):
 
 
 def handle_incoming_msg(msg, to_user, from_user):
-    global last_asker_id_name
+    global peer_list
 
     debug_print(u'I received a message {} from {}'.format(msg['Text'], get_user_display_name(from_user)))
     if msg['Content'] in TRIGGER_MSG:
         handle_robot_switch(msg, from_user)
     else:  # don't ask xiaobing with trigger question
-        if msg['FromUserName'] in peer_list:
-            debug_print(u'Robot reply is on for {}! Asking xiaobing...'.format(get_user_display_name(from_user)))
-            last_asker_id_name = msg['FromUserName']
-            ask_xiaobing(msg)
+        if msg['FrontUserName'] in peer_list:
+            handle_message_queue(msg, from_user)
+
+
+def handle_message_queue(msg, from_user):
+    global message_queue
+
+    from_user_id_name = msg['FrontUserName']
+    from_user_display_name = get_user_display_name(from_user)
+    debug_print(u'Robot reply is on for {}! Adding message to queue...'.format(from_user_display_name))
+
+    if len(message_queue) == 0:
+        debug_print(u'No one has question for xiaobing yet. {} is the first!'.format(from_user_display_name))
+        message_queue.append((from_user_id_name, [msg]))
+    else:
+        last_asker_id_name, last_questions = message_queue[-1]
+        if last_asker_id_name == from_user_id_name:
+            debug_print(u'{} just asked a follow up question'.format(from_user_display_name))
+            last_questions.append(msg)
+        else:
+            last_asker_display_name = get_user_display_name(user_id_name=last_asker_id_name)
+            debug_print(u'{} has a question before {}. Queuing up...'.format(
+                last_asker_display_name,
+                from_user_display_name
+            ))
+            message_queue.append((from_user_id_name, [msg]))
 
 
 def handle_robot_switch(incoming_msg, outgoing_msg_target_user):
@@ -71,6 +97,7 @@ def handle_robot_switch(incoming_msg, outgoing_msg_target_user):
         else:
             debug_print(u'Robot is already turned off for {}'.format(display_name))
 
+
 # --------------------------------------------- Handle Xiaobing Reply ------------------------------------------------
 
 
@@ -82,22 +109,52 @@ def map_reply(msg):
 
 
 def handle_xiaobing_reply(msg):
-    global last_asker_id_name
+    global current_asker_id_name, last_xiaobing_response_ts
 
-    if not last_asker_id_name:
+    if not current_asker_id_name:
         debug_print('Xiaobing replied but has no one to contact')
         return
 
-    asker = itchat.search_friends(userName=last_asker_id_name)
+    last_xiaobing_response_ts = now()
+    asker = itchat.search_friends(userName=current_asker_id_name)
     if msg['Type'] == 'Picture':
-        debug_print(u'xiaobing replied a picture. Relaying to {}'.format(get_user_display_name(asker)))
-        itchat.send_msg(u'小冰: 看图', last_asker_id_name)
-        send_img(msg, last_asker_id_name)
+        debug_print(u'Xiaobing replied a picture. Relaying to {}'.format(get_user_display_name(asker)))
+        itchat.send_msg(u'小冰: 看图', current_asker_id_name)
+        send_img(msg, current_asker_id_name)
     else:
-        debug_print(u'xiaobing replied {}. Relaying to {}'.format(msg['Text'], get_user_display_name(asker)))
-        itchat.send_msg(u'小冰: {}'.format(msg['Text']), last_asker_id_name)
+        debug_print(u'Xiaobing replied {}. Relaying to {}'.format(msg['Text'], get_user_display_name(asker)))
+        itchat.send_msg(u'小冰: {}'.format(msg['Text']), current_asker_id_name)
+
+
+# ------------------------------------------ Message Queue Processor ------------------------------------------------
+
+
+def process_message():
+    global message_queue, current_asker_id_name, last_xiaobing_response_ts
+
+    debug_print('processing job starts')
+    if len(message_queue) == 0:
+        debug_print(u'Was asked to process message but the queue is empty')
+    # if no one has asked xiaobing yet or xiaohing has been idle for 2 sec
+    elif last_xiaobing_response_ts or now() - last_xiaobing_response_ts > datetime.timedelta(seconds=2):
+        current_asker_id_name, msgs = message_queue.popleft()
+        debug_print(u'Xiaobing is available. Asking questions on behalf of {}'.format(
+            get_user_display_name(user_id_name=current_asker_id_name)
+        ))
+        for i, msg in enumerate(msgs):
+            debug_print(u'Question {}: {}'.format(i, msg['Text']))
+            ask_xiaobing(msg)
+
+    # check back in 1 sec
+    debug_print(u'Processing job finishes. check back with xiaobing in 1 sec')
+    Timer(1, process_message).start()
+
 
 # --------------------------------------------- Helper Functions ---------------------------------------------------
+
+
+def now():
+    return datetime.datetime.now()
 
 
 def debug_print(msg):
@@ -118,9 +175,11 @@ def ask_xiaobing(msg):
         itchat.send_msg(msg['Text'], xiao_bing_user_name)
 
 
-def get_user_display_name(user):
+def get_user_display_name(user=None, user_id_name=None):
     if user:
         return user['RemarkName'] or user['NickName'] or user['Name']
+    elif user_id_name:
+        return get_user_display_name(user=itchat.search_friends(userName=user_id_name)[0])
     else:
         return 'user not found'
 
@@ -136,7 +195,10 @@ if __name__ == '__main__':
     xiao_bing_user_name = itchat.search_mps(name=u'小冰')[0]["UserName"]
 
     peer_list = set()
-    last_asker_id_name = None
+    message_queue = deque()
+    current_asker_id_name = None
+    last_xiaobing_response_ts = None
     debug = True
 
+    process_message()
     itchat.run()
