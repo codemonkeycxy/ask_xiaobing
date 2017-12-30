@@ -3,7 +3,9 @@ WeChat bot powered by MS XiaoBing (小冰) 一个简单的微信自动回复机�
 
 快速入门（非开发者)：
 1. 微信关注小冰公众号 (普通小冰公众号只支持纯文字，需[领养一只小冰](http://www.msxiaoice.com/)之后才能识图哦)
-2. 下载[本文件](https://github.com/codemonkeycxy/ask_xiaobing/blob/master/dist/ask_xiaobing)为.exe文件并运行
+2. 下载运行文件：
+    - windows: [链接](https://github.com/codemonkeycxy/ask_xiaobing/blob/master/dist/ask_xiaobing_win-64.exe)
+    - mac: [链接](https://github.com/codemonkeycxy/ask_xiaobing/blob/master/dist/ask_xiaobing)
 
 快速入门（开发者）：
 1. 微信关注小冰公众号 (普通小冰公众号只支持纯文字，需[领养一只小冰](http://www.msxiaoice.com/)之后才能识图哦)
