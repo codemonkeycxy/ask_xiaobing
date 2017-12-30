@@ -12,10 +12,15 @@ def debug_print(msg):
         print(msg)
 
 
+# wrapper around itchat's weird way of image forwarding
+def send_img(msg, user_name):
+    msg['Text'](msg['FileName'])
+    itchat.send_image(msg['FileName'], user_name)
+
+
 def ask_xiaobing(msg):
     if msg['Type'] == 'Picture':
-        msg['Text'](msg['FileName'])
-        itchat.send_image(msg['FileName'], xiaobingUserName)
+        send_image(msg, xiaobingUserName)
     else:
         itchat.send_msg(msg['Text'], xiaobingUserName)
 
@@ -82,10 +87,9 @@ def map_reply(msg):
     if whosasking and msg['FromUserName'] == xiaobingUserName:
         asker = itchat.search_friends(userName=whosasking)
         if msg['Type'] == 'Picture':
-            msg['Text'](msg['FileName'])
             debug_print(u'xiaobing replied a picture. Relaying to {}'.format(get_user_display_name(asker)))
             itchat.send_msg(u'小冰: 看图', whosasking)
-            itchat.send_image(msg['FileName'], whosasking)
+            send_image(msg, whosasking)
         else:
             debug_print(u'xiaobing replied {}. Relaying to {}'.format(msg['Text'], get_user_display_name(asker)))
             itchat.send_msg(u'小冰: {}'.format(msg['Text']), whosasking)
