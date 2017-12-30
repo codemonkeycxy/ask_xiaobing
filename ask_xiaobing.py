@@ -109,4 +109,4 @@ if __name__ == '__main__':
     whosasking = None
     debug = True
 
-    itchat.run(debug=debug)
+    itchat.run()
