@@ -6,40 +6,50 @@
 import itchat
 from itchat.content import *
 
+
 def debug_print(msg):
     if debug:
         print(msg)
+
 
 def ask_xiaobing(msg):
     quest = msg.get('Text', 'Hey')
     itchat.send_msg(quest, xiaobingUserName)
 
-def get_user_name(user):
+
+def get_user_display_name(user):
     if user:
         return user['RemarkName'] or user['NickName'] or user['Name']
     else:
         return 'user not found'
 
-def handle_robot_switch(msg, to_user, from_user):
+
+# to turn robot on/off
+def handle_robot_switch(incoming_msg, outgoing_msg_target_user):
     global peer_list
 
-    if msg['Content'] in [u"小冰", u"小冰呢", u"小冰呢？"]:
-        if msg['ToUserName'] not in peer_list:
-            debug_print(u'Turning on robot for {}'.format(get_user_name(to_user)))
-            peer_list.add(msg['ToUserName'])
-            itchat.send_msg(u'小冰: 我在这儿呢^_^', msg['ToUserName'])
+    display_name = get_user_display_name(outgoing_msg_target_user)
+    user_id_name = outgoing_msg_target_user['UserName']
+
+    if incoming_msg['Content'] in [u"小冰", u"小冰呢", u"小冰呢？", u"小冰回来"]:
+        if user_id_name not in peer_list:
+            debug_print(u'Turning on robot for {}'.format(display_name))
+            peer_list.add(user_id_name)
+            itchat.send_msg(u'小冰: 我在这儿呢^_^', user_id_name)
         else:
-            debug_print(u'Robot is already turned on for {}'.format(get_user_name(to_user)))
-    elif msg['Content'] in [u"小冰住嘴", u"小冰闭嘴"]:
-        if msg['ToUserName'] in peer_list:
-            debug_print(u'Turning off robot for {}'.format(get_user_name(to_user)))
-            peer_list.remove(msg['ToUserName'])
-            itchat.send_msg(u'小冰: (默默走开>.<)', msg['ToUserName'])
+            debug_print(u'Robot is already turned on for {}'.format(display_name))
+    elif incoming_msg['Content'] in [u"小冰住嘴", u"小冰闭嘴"]:
+        if user_id_name in peer_list:
+            debug_print(u'Turning off robot for {}'.format(get_user_display_name(display_name)))
+            peer_list.remove(user_id_name)
+            itchat.send_msg(u'小冰: (默默走开>.<)', user_id_name)
         else:
-            debug_print(u'Robot is already turned off for {}'.format(get_user_name(to_user)))
+            debug_print(u'Robot is already turned off for {}'.format(display_name))
+
 
 def is_my_outgoing_msg(msg):
     return msg['FromUserName'] == myUserName
+
 
 # handle robot switch and friends messages
 @itchat.msg_register(TEXT, isFriendChat=True)
@@ -50,25 +60,28 @@ def text_reply(msg):
     from_user = itchat.search_friends(userName=msg['FromUserName'])
 
     if is_my_outgoing_msg(msg):
-        debug_print(u'I sent a message {} to {}'.format(msg['Text'], get_user_name(to_user)))
-        handle_robot_switch(msg, to_user, from_user)
-    else:
-        debug_print(u'I received a message {} from {}'.format(msg['Text'], get_user_name(from_user)))
+        debug_print(u'I sent a message {} to {}'.format(msg['Text'], get_user_display_name(to_user)))
+        handle_robot_switch(msg, to_user)
+    else:  # this is an incoming message from my friend
+        handle_robot_switch(msg, from_user)
+        debug_print(u'I received a message {} from {}'.format(msg['Text'], get_user_display_name(from_user)))
         if msg['FromUserName'] in peer_list:
-            debug_print(u'Robot reply is on for {}! Asking xiaobing...'.format(get_user_name(from_user)))
+            debug_print(u'Robot reply is on for {}! Asking xiaobing...'.format(get_user_display_name(from_user)))
             whosasking = msg['FromUserName']
             ask_xiaobing(msg)
 
+
 # relay back xiaobing's response
-@itchat.msg_register(TEXT, isMpChat = True)
+@itchat.msg_register(TEXT, isMpChat=True)
 def map_reply(msg):
     global whosasking
 
     if whosasking and msg['FromUserName'] == xiaobingUserName:
         asker = itchat.search_friends(userName=whosasking)
-        debug_print(u'xiaobing replied {}. Relaying to {}'.format(msg['Text'], get_user_name(asker)))
+        debug_print(u'xiaobing replied {}. Relaying to {}'.format(msg['Text'], get_user_display_name(asker)))
         itchat.send_msg(u'小冰: {}'.format(msg['Text']), whosasking)
         whosasking = None
+
 
 if __name__ == '__main__':
     itchat.auto_login(hotReload=True)
@@ -81,4 +94,3 @@ if __name__ == '__main__':
     debug = True
 
     itchat.run()
-
