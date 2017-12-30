@@ -25,10 +25,6 @@ def send_img(msg, user_name):
 
 
 def ask_xiaobing(msg):
-    if msg['Content'] in TRIGGER_MSG:
-        # don't ask xiaobing with trigger message
-        return
-
     if msg['Type'] == 'Picture':
         send_img(msg, xiao_bing_user_name)
     else:
@@ -103,15 +99,18 @@ def text_reply(msg):
 
     if is_my_outgoing_msg(msg):
         debug_print(u'I sent a message {} to {}'.format(msg['Text'], get_user_display_name(to_user)))
-        handle_robot_switch(msg, to_user)
+        if msg['Content'] in TRIGGER_MSG:
+            handle_robot_switch(msg, to_user)
     else:  # this is an incoming message from my friend
-        handle_robot_switch(msg, from_user)
         debug_print(u'I received a message {} from {}'.format(msg['Text'], get_user_display_name(from_user)))
-        if msg['FromUserName'] in peer_list:
-            debug_print(u'Robot reply is on for {}! Asking xiaobing...'.format(get_user_display_name(from_user)))
-            contact_queue.append(msg['FromUserName'])
-            last_contact = msg['FromUserName']
-            ask_xiaobing(msg)
+        if msg['Content'] in TRIGGER_MSG:
+            handle_robot_switch(msg, from_user)
+        else:  # don't ask xiaobing with trigger question
+            if msg['FromUserName'] in peer_list:
+                debug_print(u'Robot reply is on for {}! Asking xiaobing...'.format(get_user_display_name(from_user)))
+                contact_queue.append(msg['FromUserName'])
+                last_contact = msg['FromUserName']
+                ask_xiaobing(msg)
 
 
 # relay back xiaobing's response
