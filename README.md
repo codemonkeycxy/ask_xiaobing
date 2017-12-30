@@ -10,7 +10,9 @@ WeChat bot powered by MS XiaoBing (小冰)
 2. 下载[本文件](https://github.com/codemonkeycxy/ask_xiaobing/blob/master/dist/ask_xiaobing)为.exe文件并运行
 
 综合借鉴了下面这些资源：
-1. https://github.com/Lafree317/PythonChat/blob/master/chat.py （在此版本上增加了contact queue，减少多人同时和小冰聊天时的bug）
+1. https://github.com/Lafree317/PythonChat/blob/master/chat.py
 2. https://zhuanlan.zhihu.com/p/30899907
 
-本小冰目前还不能回传语音
+已知问题：
+1. 多人同时和小冰讲话时会串号
+2. 本小冰目前还不能回传语音
