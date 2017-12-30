@@ -13,8 +13,11 @@ def debug_print(msg):
 
 
 def ask_xiaobing(msg):
-    quest = msg.get('Text', 'Hey')
-    itchat.send_msg(quest, xiaobingUserName)
+    if msg['Type'] == 'Picture':
+        msg['Text'](msg['FileName'])
+        itchat.send_image(msg['FileName'], xiaobingUserName)
+    else:
+        itchat.send_msg(msg['Text'], xiaobingUserName)
 
 
 def get_user_display_name(user):
@@ -52,7 +55,7 @@ def is_my_outgoing_msg(msg):
 
 
 # handle robot switch and friends messages
-@itchat.msg_register(TEXT, isFriendChat=True)
+@itchat.msg_register([TEXT, PICTURE], isFriendChat=True)
 def text_reply(msg):
     global peer_list, whosasking
 
@@ -72,14 +75,21 @@ def text_reply(msg):
 
 
 # relay back xiaobing's response
-@itchat.msg_register(TEXT, isMpChat=True)
+@itchat.msg_register([TEXT, PICTURE], isMpChat=True)
 def map_reply(msg):
     global whosasking
 
     if whosasking and msg['FromUserName'] == xiaobingUserName:
         asker = itchat.search_friends(userName=whosasking)
-        debug_print(u'xiaobing replied {}. Relaying to {}'.format(msg['Text'], get_user_display_name(asker)))
-        itchat.send_msg(u'小冰: {}'.format(msg['Text']), whosasking)
+        if msg['Type'] == 'Picture':
+            msg['Text'](msg['FileName'])
+            debug_print(u'xiaobing replied a picture. Relaying to {}'.format(get_user_display_name(asker)))
+            itchat.send_msg(u'小冰: 看图', whosasking)
+            itchat.send_image(msg['FileName'], whosasking)
+        else:
+            debug_print(u'xiaobing replied {}. Relaying to {}'.format(msg['Text'], get_user_display_name(asker)))
+            itchat.send_msg(u'小冰: {}'.format(msg['Text']), whosasking)
+
         whosasking = None
 
 
