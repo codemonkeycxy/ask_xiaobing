@@ -40,7 +40,7 @@ def handle_robot_switch(incoming_msg, outgoing_msg_target_user):
             debug_print(u'Robot is already turned on for {}'.format(display_name))
     elif incoming_msg['Content'] in [u"小冰住嘴", u"小冰闭嘴", u"滚", u"你滚", u"你闭嘴"]:
         if user_id_name in peer_list:
-            debug_print(u'Turning off robot for {}'.format(get_user_display_name(display_name)))
+            debug_print(u'Turning off robot for {}'.format(display_name))
             peer_list.remove(user_id_name)
             itchat.send_msg(u'小冰: (默默走开>.<)', user_id_name)
         else:
