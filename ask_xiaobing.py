@@ -8,6 +8,11 @@ from itchat.content import *
 from collections import deque
 
 
+WAKEN_MSG = [u"小冰", u"小冰小冰", u"小冰呢", u"小冰呢？", u"小冰回来", u"小冰出来"]
+HIBERNATE_MSG = [u"小冰住嘴", u"小冰闭嘴", u"滚", u"你滚", u"你闭嘴", u"下去吧"]
+TRIGGER_MSG = WAKEN_MSG + HIBERNATE_MSG
+
+
 def debug_print(msg):
     if debug:
         print(msg)
@@ -20,6 +25,10 @@ def send_img(msg, user_name):
 
 
 def ask_xiaobing(msg):
+    if msg['Content'] in TRIGGER_MSG:
+        # don't ask xiaobing with trigger message
+        return
+
     if msg['Type'] == 'Picture':
         send_img(msg, xiao_bing_user_name)
     else:
@@ -44,14 +53,14 @@ def handle_robot_switch(incoming_msg, outgoing_msg_target_user):
     display_name = get_user_display_name(outgoing_msg_target_user)
     user_id_name = outgoing_msg_target_user['UserName']
 
-    if incoming_msg['Content'] in [u"小冰", u"小冰小冰", u"小冰呢", u"小冰呢？", u"小冰回来", u"小冰出来"]:
+    if incoming_msg['Content'] in WAKEN_MSG:
         if user_id_name not in peer_list:
             debug_print(u'Turning on robot for {}'.format(display_name))
             peer_list.add(user_id_name)
             itchat.send_msg(u'小冰: 我在这儿呢^_^', user_id_name)
         else:
             debug_print(u'Robot is already turned on for {}'.format(display_name))
-    elif incoming_msg['Content'] in [u"小冰住嘴", u"小冰闭嘴", u"滚", u"你滚", u"你闭嘴"]:
+    elif incoming_msg['Content'] in HIBERNATE_MSG:
         if user_id_name in peer_list:
             debug_print(u'Turning off robot for {}'.format(display_name))
             peer_list.remove(user_id_name)
