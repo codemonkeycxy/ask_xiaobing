@@ -36,6 +36,10 @@ def get_user_display_name(user):
 def handle_robot_switch(incoming_msg, outgoing_msg_target_user):
     global peer_list
 
+    if not outgoing_msg_target_user:
+        debug_print(u'Outgoing message target user not recognized. Can\'t turn on/off robot')
+        return
+
     display_name = get_user_display_name(outgoing_msg_target_user)
     user_id_name = outgoing_msg_target_user['UserName']
 
@@ -94,11 +98,9 @@ def map_reply(msg):
             debug_print(u'xiaobing replied {}. Relaying to {}'.format(msg['Text'], get_user_display_name(asker)))
             itchat.send_msg(u'小冰: {}'.format(msg['Text']), whosasking)
 
-        whosasking = None
-
 
 if __name__ == '__main__':
-    itchat.auto_login(hotReload=True)
+    itchat.auto_login()
 
     myUserName = itchat.get_friends(update=True)[0]["UserName"]
     xiaobingUserName = itchat.search_mps(name=u'小冰')[0]["UserName"]
@@ -107,4 +109,4 @@ if __name__ == '__main__':
     whosasking = None
     debug = True
 
-    itchat.run()
+    itchat.run(debug=debug)
