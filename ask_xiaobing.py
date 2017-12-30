@@ -136,7 +136,7 @@ def process_message():
     if len(message_queue) == 0:
         debug_print(u'Was asked to process message but the queue is empty')
     # if no one has asked xiaobing yet or xiaohing has been idle for 2 sec
-    elif last_xiaobing_response_ts or now() - last_xiaobing_response_ts > datetime.timedelta(seconds=2):
+    elif not last_xiaobing_response_ts or now() - last_xiaobing_response_ts > datetime.timedelta(seconds=2):
         current_asker_id_name, msgs = message_queue.popleft()
         debug_print(u'Xiaobing is available. Asking questions on behalf of {}'.format(
             get_user_display_name(user_id_name=current_asker_id_name)
