@@ -31,14 +31,18 @@ def text_reply(msg):
 
 @itchat.msg_register([TEXT,PICTURE], isGroupChat = True)
 def group_reply(msg):
-    fromUserName = msg['FromUserName']
-    print(fromUserName)
-    group = itchat.search_chatrooms(userName=fromUserName)
+    from_user_name = msg['FromUserName']
+    to_user_name = msg['ToUserName']
+    print(msg)
     if is_my_outgoing_msg(msg):
+        group = itchat.search_chatrooms(userName=to_user_name)
+        print(group['NickName'] + u"群的 " + msg['ActualNickName'] + u" 发来的消息\n" + msg['Content'])
+        itchat.send_msg(u'小冰: {}'.format("Happy Christmas!"), to_user_name)
     else:
-    print(group['NickName'] + u"群的 " + msg['ActualNickName'] + u" 发来的消息\n" + msg['Content'] )
-    if msg['isAt'] == True:
-        itchat.send_msg(u'小冰: {}'.format("Happy new year!"), fromUserName)
+        group = itchat.search_chatrooms(userName=from_user_name)
+        print(group['NickName'] + u"群的 " + msg['ActualNickName'] + u" 发来的消息\n" + msg['Content'])
+        if msg['isAt'] == True:
+            itchat.send_msg(u'小冰: {}'.format("Happy new year!"), from_user_name)
 
 
 def handle_outgoing_msg(msg, to_user, from_user):
