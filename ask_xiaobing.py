@@ -44,7 +44,7 @@ def get_user_display_name(user):
 
 # to turn robot on/off
 def handle_robot_switch(incoming_msg, outgoing_msg_target_user):
-    global peer_list, contact_queue, last_contact
+    global peer_list
 
     if not outgoing_msg_target_user:
         debug_print(u'Outgoing message target user not recognized. Can\'t turn on/off robot')
@@ -63,12 +63,7 @@ def handle_robot_switch(incoming_msg, outgoing_msg_target_user):
     elif incoming_msg['Content'] in HIBERNATE_MSG:
         if user_id_name in peer_list:
             debug_print(u'Turning off robot for {}'.format(display_name))
-
             peer_list.remove(user_id_name)
-            # avoid sending further messages when user opts out
-            last_contact = None if last_contact == user_id_name else last_contact
-            contact_queue = deque([contact for contact in contact_queue if contact != user_id_name])
-
             itchat.send_msg(u'小冰: (默默走开>.<)', user_id_name)
         else:
             debug_print(u'Robot is already turned off for {}'.format(display_name))
