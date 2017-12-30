@@ -132,10 +132,9 @@ def handle_xiaobing_reply(msg):
 def process_message():
     global message_queue, current_asker_id_name, last_xiaobing_response_ts
 
-    debug_print('processing job starts')
     if len(message_queue) == 0:
         debug_print(u'Was asked to process message but the queue is empty')
-    # if no one has asked xiaobing yet or xiaohing has been idle for 2 sec
+    # if no one has asked xiaobing yet or xiaobing has been idle for 2 sec
     elif not last_xiaobing_response_ts or now() - last_xiaobing_response_ts > datetime.timedelta(seconds=2):
         current_asker_id_name, msgs = message_queue.popleft()
         debug_print(u'Xiaobing is available. Asking questions on behalf of {}'.format(
@@ -146,7 +145,6 @@ def process_message():
             ask_xiaobing(msg)
 
     # check back in 1 sec
-    debug_print(u'Processing job finishes. check back with xiaobing in 1 sec')
     Timer(1, process_message).start()
 
 
