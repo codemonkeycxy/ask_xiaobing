@@ -59,6 +59,19 @@ def handle_robot_switch(incoming_msg, outgoing_msg_target_user):
             debug_print(u'Robot is already turned off for {}'.format(display_name))
 
 
+def handle_xiaobing_reply():
+    global whosasking
+    
+    asker = itchat.search_friends(userName=whosasking)
+    if msg['Type'] == 'Picture':
+        debug_print(u'xiaobing replied a picture. Relaying to {}'.format(get_user_display_name(asker)))
+        itchat.send_msg(u'小冰: 看图', whosasking)
+        send_image(msg, whosasking)
+    else:
+        debug_print(u'xiaobing replied {}. Relaying to {}'.format(msg['Text'], get_user_display_name(asker)))
+        itchat.send_msg(u'小冰: {}'.format(msg['Text']), whosasking)
+
+
 def is_my_outgoing_msg(msg):
     return msg['FromUserName'] == myUserName
 
@@ -89,14 +102,7 @@ def map_reply(msg):
     global whosasking
 
     if whosasking and msg['FromUserName'] == xiaobingUserName:
-        asker = itchat.search_friends(userName=whosasking)
-        if msg['Type'] == 'Picture':
-            debug_print(u'xiaobing replied a picture. Relaying to {}'.format(get_user_display_name(asker)))
-            itchat.send_msg(u'小冰: 看图', whosasking)
-            send_image(msg, whosasking)
-        else:
-            debug_print(u'xiaobing replied {}. Relaying to {}'.format(msg['Text'], get_user_display_name(asker)))
-            itchat.send_msg(u'小冰: {}'.format(msg['Text']), whosasking)
+        handle_xiaobing_reply()
 
 
 if __name__ == '__main__':
