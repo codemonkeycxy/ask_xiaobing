@@ -12,34 +12,43 @@ WAKEN_MSG = [u"小冰", u"小冰小冰", u"小冰呢", u"小冰呢？", u"小冰
 HIBERNATE_MSG = [u"小冰住嘴", u"小冰闭嘴", u"滚", u"你滚", u"你闭嘴", u"下去吧"]
 TRIGGER_MSG = WAKEN_MSG + HIBERNATE_MSG
 
-
-def debug_print(msg):
-    if debug:
-        print(msg)
+# --------------------------------------------- Handle Friend Chat ---------------------------------------------------
 
 
-# wrapper around itchat's weird way of image forwarding
-def send_img(msg, user_name):
-    msg['Text'](msg['FileName'])
-    itchat.send_image(msg['FileName'], user_name)
+@itchat.msg_register([TEXT, PICTURE], isFriendChat=True)
+def text_reply(msg):
+    """ handle robot switch and friends messages """
+    to_user = itchat.search_friends(userName=msg['ToUserName'])
+    from_user = itchat.search_friends(userName=msg['FromUserName'])
+
+    if is_my_outgoing_msg(msg):
+        handle_outgoing_msg(msg, to_user, from_user)
+    else:  # this is an incoming message from my friend
+        handle_incoming_msg(msg, to_user, from_user)
 
 
-def ask_xiaobing(msg):
-    if msg['Type'] == 'Picture':
-        send_img(msg, xiao_bing_user_name)
-    else:
-        itchat.send_msg(msg['Text'], xiao_bing_user_name)
+def handle_outgoing_msg(msg, to_user, from_user):
+    debug_print(u'I sent a message {} to {}'.format(msg['Text'], get_user_display_name(to_user)))
+    if msg['Content'] in TRIGGER_MSG:
+        handle_robot_switch(msg, to_user)
 
 
-def get_user_display_name(user):
-    if user:
-        return user['RemarkName'] or user['NickName'] or user['Name']
-    else:
-        return 'user not found'
+def handle_incoming_msg(msg, to_user, from_user):
+    global contact_queue, last_contact
+
+    debug_print(u'I received a message {} from {}'.format(msg['Text'], get_user_display_name(from_user)))
+    if msg['Content'] in TRIGGER_MSG:
+        handle_robot_switch(msg, from_user)
+    else:  # don't ask xiaobing with trigger question
+        if msg['FromUserName'] in peer_list:
+            debug_print(u'Robot reply is on for {}! Asking xiaobing...'.format(get_user_display_name(from_user)))
+            contact_queue.append(msg['FromUserName'])
+            last_contact = msg['FromUserName']
+            ask_xiaobing(msg)
 
 
-# to turn robot on/off
 def handle_robot_switch(incoming_msg, outgoing_msg_target_user):
+    """ Turn robot on/off according to the trigger message """
     global peer_list
 
     if not outgoing_msg_target_user:
@@ -64,6 +73,15 @@ def handle_robot_switch(incoming_msg, outgoing_msg_target_user):
         else:
             debug_print(u'Robot is already turned off for {}'.format(display_name))
 
+# --------------------------------------------- Handle Xiaobing Reply ------------------------------------------------
+
+
+@itchat.msg_register([TEXT, PICTURE], isMpChat=True)
+def map_reply(msg):
+    """ relay back xiaobing's response """
+    if msg['FromUserName'] == xiao_bing_user_name:
+        handle_xiaobing_reply(msg)
+
 
 def handle_xiaobing_reply(msg):
     global contact_queue, last_contact
@@ -84,48 +102,36 @@ def handle_xiaobing_reply(msg):
         debug_print(u'xiaobing replied {}. Relaying to {}'.format(msg['Text'], get_user_display_name(asker)))
         itchat.send_msg(u'小冰: {}'.format(msg['Text']), asker_id_name)
 
+# --------------------------------------------- Helper Functions ---------------------------------------------------
+
+
+def debug_print(msg):
+    if debug:
+        print(msg)
+
+
+def send_img(msg, user_name):
+    """ wrapper around itchat's weird way of image forwarding """
+    msg['Text'](msg['FileName'])
+    itchat.send_image(msg['FileName'], user_name)
+
+
+def ask_xiaobing(msg):
+    if msg['Type'] == 'Picture':
+        send_img(msg, xiao_bing_user_name)
+    else:
+        itchat.send_msg(msg['Text'], xiao_bing_user_name)
+
+
+def get_user_display_name(user):
+    if user:
+        return user['RemarkName'] or user['NickName'] or user['Name']
+    else:
+        return 'user not found'
+
 
 def is_my_outgoing_msg(msg):
     return msg['FromUserName'] == my_user_name
-
-
-def handle_outgoing_msg(msg, to_user, from_user):
-    debug_print(u'I sent a message {} to {}'.format(msg['Text'], get_user_display_name(to_user)))
-    if msg['Content'] in TRIGGER_MSG:
-        handle_robot_switch(msg, to_user)
-
-
-def handle_incoming_msg(msg, to_user, from_user):
-    global contact_queue, last_contact
-
-    debug_print(u'I received a message {} from {}'.format(msg['Text'], get_user_display_name(from_user)))
-    if msg['Content'] in TRIGGER_MSG:
-        handle_robot_switch(msg, from_user)
-    else:  # don't ask xiaobing with trigger question
-        if msg['FromUserName'] in peer_list:
-            debug_print(u'Robot reply is on for {}! Asking xiaobing...'.format(get_user_display_name(from_user)))
-            contact_queue.append(msg['FromUserName'])
-            last_contact = msg['FromUserName']
-            ask_xiaobing(msg)
-
-
-# handle robot switch and friends messages
-@itchat.msg_register([TEXT, PICTURE], isFriendChat=True)
-def text_reply(msg):
-    to_user = itchat.search_friends(userName=msg['ToUserName'])
-    from_user = itchat.search_friends(userName=msg['FromUserName'])
-
-    if is_my_outgoing_msg(msg):
-        handle_outgoing_msg(msg, to_user, from_user)
-    else:  # this is an incoming message from my friend
-        handle_incoming_msg(msg, to_user, from_user)
-
-
-# relay back xiaobing's response
-@itchat.msg_register([TEXT, PICTURE], isMpChat=True)
-def map_reply(msg):
-    if msg['FromUserName'] == xiao_bing_user_name:
-        handle_xiaobing_reply(msg)
 
 
 if __name__ == '__main__':
