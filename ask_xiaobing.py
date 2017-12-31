@@ -25,18 +25,30 @@ def text_reply(msg):
     from_user = itchat.search_friends(userName=msg['FromUserName'])
 
     if is_my_outgoing_msg(msg):
-        handle_outgoing_msg(msg, to_user, from_user)
+        handle_outgoing_msg(msg, to_user)
     else:  # this is an incoming message from my friend
-        handle_incoming_msg(msg, to_user, from_user)
+        handle_incoming_msg(msg, from_user)
+
+@itchat.msg_register([TEXT,PICTURE], isGroupChat = True)
+def group_reply(msg):
+    from_user_name = msg['FromUserName']
+    to_user_name = msg['ToUserName']
+    print(msg)
+    if is_my_outgoing_msg(msg):
+        group = itchat.search_chatrooms(userName=to_user_name)
+        handle_outgoing_msg(msg, group)
+    else:
+        group = itchat.search_chatrooms(userName=from_user_name)
+        handle_incoming_msg(msg, group)
 
 
-def handle_outgoing_msg(msg, to_user, from_user):
+def handle_outgoing_msg(msg, to_user):
     debug_print(u'I sent a message {} to {}'.format(msg['Text'], get_user_display_name(to_user)))
     if msg['Content'] in TRIGGER_MSG:
         handle_robot_switch(msg, to_user)
 
 
-def handle_incoming_msg(msg, to_user, from_user):
+def handle_incoming_msg(msg, from_user):
     global peer_list
 
     debug_print(u'I received a message {} from {}'.format(msg['Text'], get_user_display_name(from_user)))
