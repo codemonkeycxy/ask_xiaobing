@@ -201,8 +201,13 @@ def now():
 
 
 def debug_print(msg):
-    if debug:
-        print(msg.encode(errors="ignore"))
+    if not debug:
+        return
+
+    try:
+        print(u'{} {}'.format(now(), msg))
+    except Exception as e:
+        print(str(e))
 
 
 def send_img(msg, user_name):
