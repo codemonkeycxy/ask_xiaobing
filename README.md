@@ -11,9 +11,10 @@ WeChat bot powered by MS XiaoBing (小冰) 一个简单的微信自动回复机�
 
 快速入门（开发者）：
 1. 微信关注小冰公众号 (普通小冰公众号只支持纯文字，需[领养一只小冰](http://www.msxiaoice.com/)之后才能识图哦)
-2. `brew install python`
-3. `pip install itchat`
-4. `python ask_xiaobing.py`
+2. `git clone https://github.com/codemonkeycxy/ask_xiaobing.git`
+3. `brew install python`
+4. `pip install itchat`
+5. 进入ask_xiaobing文件夹并运行`python ask_xiaobing.py`
 
 人机对话：
 
