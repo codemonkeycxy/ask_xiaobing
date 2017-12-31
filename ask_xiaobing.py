@@ -133,7 +133,6 @@ def handle_xiaobing_reply(msg):
     asker = itchat.search_friends(userName=current_asker_id_name)
     if msg['Type'] == 'Picture':
         debug_print(u'Xiaobing replied a picture. Relaying to {}'.format(get_user_display_name(asker)))
-        itchat.send_msg(u'小冰: 看图', current_asker_id_name)
         send_img(msg, current_asker_id_name)
     elif msg['Type'] == 'Text':
         debug_print(u'Xiaobing replied {}. Relaying to {}'.format(msg['Text'], get_user_display_name(asker)))
