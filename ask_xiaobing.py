@@ -21,20 +21,24 @@ TRIGGER_MSG = WAKEN_MSG + HIBERNATE_MSG
 @itchat.msg_register([TEXT, PICTURE], isFriendChat=True)
 def text_reply(msg):
     """ handle robot switch and friends messages """
+    to_user = itchat.search_friends(userName=msg['ToUserName'])
+    from_user = itchat.search_friends(userName=msg['FromUserName'])
+
     if is_my_outgoing_msg(msg):
-        to_user = itchat.search_friends(userName=msg['ToUserName'])
         handle_outgoing_msg(msg, to_user)
     else:  # this is an incoming message from my friend
-        from_user = itchat.search_friends(userName=msg['FromUserName'])
         handle_incoming_msg(msg, from_user)
 
 @itchat.msg_register([TEXT,PICTURE], isGroupChat = True)
 def group_reply(msg):
+    from_user_name = msg['FromUserName']
+    to_user_name = msg['ToUserName']
+    print(msg)
     if is_my_outgoing_msg(msg):
-        group = itchat.search_chatrooms(userName=msg['FromUserName'])
+        group = itchat.search_chatrooms(userName=to_user_name)
         handle_outgoing_msg(msg, group)
     else:
-        group = itchat.search_chatrooms(userName=msg['ToUserName'])
+        group = itchat.search_chatrooms(userName=from_user_name)
         handle_incoming_msg(msg, group)
 
 
