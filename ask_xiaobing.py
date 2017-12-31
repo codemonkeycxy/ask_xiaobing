@@ -16,6 +16,7 @@ TRIGGER_MSG = WAKEN_MSG + HIBERNATE_MSG
 
 THROTTLE_WINDOW = 5  # sec
 THROTTLE_SLIDER_SIZE = 10  # 10 items per time window
+FOLLOW_UP_Q_LIMIT = 2  # can ask at most 2 questions at a time
 
 # --------------------------------------------- Handle Friend Chat ---------------------------------------------------
 
@@ -72,7 +73,7 @@ def handle_message_queue(msg, from_user):
         message_queue.append((from_user_id_name, [msg]))
     else:
         last_asker_id_name, last_questions = message_queue[-1]
-        if last_asker_id_name == from_user_id_name:
+        if last_asker_id_name == from_user_id_name and len(last_questions) < FOLLOW_UP_Q_LIMIT:
             debug_print(u'{} just asked a follow up question'.format(from_user_display_name))
             last_questions.append(msg)
         else:
