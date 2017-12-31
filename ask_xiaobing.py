@@ -58,17 +58,20 @@ def handle_incoming_msg(msg, from_user):
 
 
 def handle_message_queue(msg, from_user):
-    global message_queue
+    global message_queue, message_hash 
 
     from_user_id_name = msg['FromUserName']
     from_user_display_name = get_user_display_name(from_user)
     debug_print(u'Robot reply is on for {}! Adding message to queue...'.format(from_user_display_name))
-    message_queue.append(from_user_id_name, msg)
+    if from_user_id_name not in message_hash:
+        message_queue.append(from_user_id_name) 
+    message_hash[from_user_id_name] = msg
 
 
 def handle_robot_switch(incoming_msg, outgoing_msg_target_user):
     """ Turn robot on/off according to the trigger message """
     global peer_list
+
 
     if not outgoing_msg_target_user:
         debug_print(u'Outgoing message target user not recognized. Can\'t turn on/off robot')
@@ -104,7 +107,7 @@ def map_reply(msg):
 
 
 def handle_xiaobing_reply(msg):
-    global current_asker_id_name, last_xiaobing_response_ts
+    global current_asker_id_name, last_xiaobing_response_ts, in_trans
 
     if not current_asker_id_name:
         debug_print('Xiaobing replied but has no one to contact')
@@ -112,6 +115,7 @@ def handle_xiaobing_reply(msg):
 
     last_xiaobing_response_ts = now()
     asker = itchat.search_friends(userName=current_asker_id_name)
+    in_trans = False
     if msg['Type'] == 'Picture':
         debug_print(u'Xiaobing replied a picture. Relaying to {}'.format(get_user_display_name(asker)))
         itchat.send_msg(u'小冰: 看图', current_asker_id_name)
@@ -129,21 +133,23 @@ def handle_xiaobing_reply(msg):
 
 
 def process_message():
-    global message_queue, last_xiaobing_response_ts
+    global message_queue, message_hash ,last_xiaobing_response_ts,current_asker_id_name, in_trans
 
     if len(message_queue) == 0:
         debug_print(u'Was asked to process message but the queue is empty')
         pass
     # if no one has asked xiaobing yet or xiaobing has been idle for 2 sec
-    elif not last_xiaobing_response_ts or now() - last_xiaobing_response_ts > datetime.timedelta(seconds=2):
-        current_asker_id_name, msgs = message_queue.popleft()
+    elif not last_xiaobing_response_ts or (not in_trans and now() - last_xiaobing_response_ts > datetime.timedelta(seconds=2)):
+        current_asker_id_name = message_queue.popleft()
+        msg = message_hash.pop(current_asker_id_name,None)
+        if not msg:
+            debug_print("Msg hash is messed up")
+            return
         debug_print(u'Xiaobing is available. Asking questions on behalf of {}'.format(
             get_user_display_name(user_id_name=current_asker_id_name)
         ))
-        for i, msg in enumerate(msgs):
-            debug_print(u'Question {}: {}'.format(i, msg['Text']))
-            throttle_message(msg, current_asker_id_name)
-
+        in_trans = True
+        ask_xiaobing(msg)
     # check back in 1 sec
     Timer(1, process_message).start()
 
@@ -197,6 +203,8 @@ if __name__ == '__main__':
     peer_list = set()
     question_timetable = {}
     message_queue = deque()
+    message_hash = {}
+    in_trans = False
     current_asker_id_name = None
     last_xiaobing_response_ts = None
     debug = True
