@@ -216,7 +216,11 @@ def ask_xiaobing(msg):
     if msg['Type'] == 'Picture':
         send_img(msg, xiao_bing_user_name)
     else:
-        itchat.send_msg(msg['Text'], xiao_bing_user_name)
+        text = msg['Text']
+        if text.startswith(u'小冰: '):
+            # remove dialog prefix when bots talk to each other
+            text = text.replace(u'小冰: ', '')
+        itchat.send_msg(text, xiao_bing_user_name)
 
 
 def get_user_display_name(user=None, user_id_name=None):
