@@ -14,7 +14,8 @@ WAKEN_MSG = [u"小冰", u"小冰小冰", u"小冰呢", u"小冰呢？", u"小冰
 HIBERNATE_MSG = [u"小冰住嘴", u"小冰闭嘴", u"滚", u"你滚", u"你闭嘴", u"下去吧", u"小冰下去", u"小冰退下"]
 TRIGGER_MSG = WAKEN_MSG + HIBERNATE_MSG
 
-FOLLOW_UP_Q_LIMIT = 2  # can ask at most 2 questions at a time
+XIAOBING_IDLENESS_THRESHOLD = 1  # sec
+MSG_PROCESS_FREQ = 0.5  # sec
 
 # --------------------------------------------- Handle Friend Chat ---------------------------------------------------
 
@@ -29,6 +30,7 @@ def text_reply(msg):
         handle_outgoing_msg(msg, to_user)
     else:  # this is an incoming message from my friend
         handle_incoming_msg(msg, from_user)
+
 
 @itchat.msg_register([TEXT,PICTURE], isGroupChat = True)
 def group_reply(msg):
@@ -60,27 +62,22 @@ def handle_incoming_msg(msg, from_user):
 
 
 def handle_message_queue(msg, from_user):
-    global message_queue
+    global asker_queue, unprocessed_questions
 
     from_user_id_name = msg['FromUserName']
     from_user_display_name = get_user_display_name(from_user)
     debug_print(u'Robot reply is on for {}! Adding message to queue...'.format(from_user_display_name))
 
-    if len(message_queue) == 0:
-        debug_print(u'No one has question for xiaobing yet. {} is the first!'.format(from_user_display_name))
-        message_queue.append((from_user_id_name, [msg]))
+    if from_user_id_name not in unprocessed_questions:
+        # this user has no unprocessed question, adding to the asker queue
+        asker_queue.append(from_user_id_name)
     else:
-        last_asker_id_name, last_questions = message_queue[-1]
-        if last_asker_id_name == from_user_id_name and len(last_questions) < FOLLOW_UP_Q_LIMIT:
-            debug_print(u'{} just asked a follow up question'.format(from_user_display_name))
-            last_questions.append(msg)
-        else:
-            last_asker_display_name = get_user_display_name(user_id_name=last_asker_id_name)
-            debug_print(u'{} has a question before {}. Queuing up...'.format(
-                last_asker_display_name,
-                from_user_display_name
-            ))
-            message_queue.append((from_user_id_name, [msg]))
+        debug_print(u'{} is asking questions too quickly. Drop the previous one and use the current'.format(
+            from_user_display_name
+        ))
+
+    # only register the last question of each unprocessed user
+    unprocessed_questions[from_user_id_name] = msg
 
 
 def handle_robot_switch(incoming_msg, outgoing_msg_target_user):
@@ -121,14 +118,14 @@ def map_reply(msg):
 
 
 def handle_xiaobing_reply(msg):
-    global current_asker_id_name, last_xiaobing_response_ts, in_trans
+    global current_asker_id_name, last_xiaobing_response_ts, is_xiaobing_busy
 
     if not current_asker_id_name:
         debug_print('Xiaobing replied but has no one to contact')
         return
 
     last_xiaobing_response_ts = now()
-    in_trans = False
+    is_xiaobing_busy = False
     asker = itchat.search_friends(userName=current_asker_id_name)
     if msg['Type'] == 'Picture':
         debug_print(u'Xiaobing replied a picture. Relaying to {}'.format(get_user_display_name(asker)))
@@ -146,24 +143,28 @@ def handle_xiaobing_reply(msg):
 
 
 def process_message():
-    global message_queue, current_asker_id_name, last_xiaobing_response_ts, in_trans
+    global asker_queue, current_asker_id_name, last_xiaobing_response_ts, is_xiaobing_busy
 
-    if len(message_queue) == 0:
+    if len(asker_queue) == 0:
         # debug_print(u'Was asked to process message but the queue is empty')
         pass
+    elif is_xiaobing_busy:
+        # skip this round if xiaobing is current busy
+        pass
     # if no one has asked xiaobing yet or xiaobing has been idle for 2 sec
-    elif not last_xiaobing_response_ts or (not in_trans and now() - last_xiaobing_response_ts > datetime.timedelta(seconds=2)):
-        current_asker_id_name, msgs = message_queue.popleft()
+    elif (not last_xiaobing_response_ts or
+          now() - last_xiaobing_response_ts > datetime.timedelta(seconds=XIAOBING_IDLENESS_THRESHOLD)):
+        current_asker_id_name = asker_queue.popleft()
+        msg = unprocessed_questions[current_asker_id_name]
+
         debug_print(u'Xiaobing is available. Asking questions on behalf of {}'.format(
             get_user_display_name(user_id_name=current_asker_id_name)
         ))
-        in_trans = True
-        for i, msg in enumerate(msgs):
-            debug_print(u'Question {}: {}'.format(i, msg['Text']))
-            ask_xiaobing(msg)
+        is_xiaobing_busy = True
+        ask_xiaobing(msg)
 
-    # check back in 1 sec
-    Timer(1, process_message).start()
+    # check back later
+    Timer(MSG_PROCESS_FREQ, process_message).start()
 
 
 # --------------------------------------------- Helper Functions ---------------------------------------------------
@@ -220,11 +221,12 @@ if __name__ == '__main__':
     xiao_bing_user_name = itchat.search_mps(name=u'小冰')[0]["UserName"]
 
     peer_list = set()
-    message_queue = deque()
+    asker_queue = deque()
+    unprocessed_questions = {}
     current_asker_id_name = None
     last_xiaobing_response_ts = None
     debug = True
-    in_trans = False
+    is_xiaobing_busy = False
 
     process_message()
     itchat.run()
