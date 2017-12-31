@@ -144,7 +144,8 @@ def process_message():
     global message_queue, current_asker_id_name, last_xiaobing_response_ts
 
     if len(message_queue) == 0:
-        debug_print(u'Was asked to process message but the queue is empty')
+        # debug_print(u'Was asked to process message but the queue is empty')
+        pass
     # if no one has asked xiaobing yet or xiaobing has been idle for 2 sec
     elif not last_xiaobing_response_ts or now() - last_xiaobing_response_ts > datetime.timedelta(seconds=2):
         current_asker_id_name, msgs = message_queue.popleft()
