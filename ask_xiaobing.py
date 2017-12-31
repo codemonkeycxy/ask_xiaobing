@@ -123,13 +123,14 @@ def map_reply(msg):
 
 
 def handle_xiaobing_reply(msg):
-    global current_asker_id_name, last_xiaobing_response_ts
+    global current_asker_id_name, last_xiaobing_response_ts, in_trans
 
     if not current_asker_id_name:
         debug_print('Xiaobing replied but has no one to contact')
         return
 
     last_xiaobing_response_ts = now()
+    in_trans = False
     asker = itchat.search_friends(userName=current_asker_id_name)
     if msg['Type'] == 'Picture':
         debug_print(u'Xiaobing replied a picture. Relaying to {}'.format(get_user_display_name(asker)))
@@ -147,17 +148,18 @@ def handle_xiaobing_reply(msg):
 
 
 def process_message():
-    global message_queue, current_asker_id_name, last_xiaobing_response_ts
+    global message_queue, current_asker_id_name, last_xiaobing_response_ts, in_trans
 
     if len(message_queue) == 0:
         # debug_print(u'Was asked to process message but the queue is empty')
         pass
     # if no one has asked xiaobing yet or xiaobing has been idle for 2 sec
-    elif not last_xiaobing_response_ts or now() - last_xiaobing_response_ts > datetime.timedelta(seconds=2):
+    elif not last_xiaobing_response_ts or (not in_trans and now() - last_xiaobing_response_ts > datetime.timedelta(seconds=2)):
         current_asker_id_name, msgs = message_queue.popleft()
         debug_print(u'Xiaobing is available. Asking questions on behalf of {}'.format(
             get_user_display_name(user_id_name=current_asker_id_name)
         ))
+        in_trans = True
         for i, msg in enumerate(msgs):
             debug_print(u'Question {}: {}'.format(i, msg['Text']))
             throttle_message(msg, current_asker_id_name)
@@ -252,6 +254,7 @@ if __name__ == '__main__':
     current_asker_id_name = None
     last_xiaobing_response_ts = None
     debug = True
+    in_trans = False
 
     process_message()
     itchat.run()
