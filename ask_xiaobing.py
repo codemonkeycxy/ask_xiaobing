@@ -33,7 +33,6 @@ def text_reply(msg):
 def group_reply(msg):
     from_user_name = msg['FromUserName']
     to_user_name = msg['ToUserName']
-    print(msg)
     if is_my_outgoing_msg(msg):
         group = itchat.search_chatrooms(userName=to_user_name)
         handle_outgoing_msg(msg, group)
