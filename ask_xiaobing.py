@@ -217,7 +217,7 @@ def ask_xiaobing(msg):
         send_img(msg, xiao_bing_user_name)
     else:
         text = msg['Text']
-        if text.startswith(u'小冰: '):
+        if text and text.startswith(u'小冰: '):
             # remove dialog prefix when bots talk to each other
             text = text.replace(u'小冰: ', '')
         itchat.send_msg(text, xiao_bing_user_name)
