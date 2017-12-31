@@ -14,8 +14,6 @@ WAKEN_MSG = [u"小冰", u"小冰小冰", u"小冰呢", u"小冰呢？", u"小冰
 HIBERNATE_MSG = [u"小冰住嘴", u"小冰闭嘴", u"滚", u"你滚", u"你闭嘴", u"下去吧", u"小冰下去", u"小冰退下"]
 TRIGGER_MSG = WAKEN_MSG + HIBERNATE_MSG
 
-THROTTLE_WINDOW = 5  # sec
-THROTTLE_SLIDER_SIZE = 10  # 10 items per time window
 FOLLOW_UP_Q_LIMIT = 2  # can ask at most 2 questions at a time
 
 # --------------------------------------------- Handle Friend Chat ---------------------------------------------------
@@ -162,37 +160,10 @@ def process_message():
         in_trans = True
         for i, msg in enumerate(msgs):
             debug_print(u'Question {}: {}'.format(i, msg['Text']))
-            throttle_message(msg, current_asker_id_name)
+            ask_xiaobing(msg)
 
     # check back in 1 sec
     Timer(1, process_message).start()
-
-
-def throttle_message(msg, asker_id_name):
-    """ throttle questions rate to avoid flooding wechat """
-    global question_timetable
-
-    if asker_id_name not in question_timetable:
-        # first question, no limit
-        question_timetable[asker_id_name] = deque([now()])
-    else:
-        ts_queue = question_timetable[asker_id_name]
-
-        if len(ts_queue) < THROTTLE_SLIDER_SIZE:
-            # throttle window not full yet, can keep going
-            ts_queue.append(now())
-        else:
-            first_q_ts = question_timetable[asker_id_name][0]
-
-            if now() - first_q_ts > datetime.timedelta(seconds=THROTTLE_WINDOW):
-                # the new question is spaced out wide enough, move the slider and we are good
-                ts_queue.popleft()
-                ts_queue.append(now())
-            else:
-                debug_print(u'{} is trying to ask a question too soon. msg rejected'.format(asker_id_name))
-                return  # IMPORTANT!!! break here so msg is actually sent
-
-    ask_xiaobing(msg)
 
 
 # --------------------------------------------- Helper Functions ---------------------------------------------------
@@ -249,7 +220,6 @@ if __name__ == '__main__':
     xiao_bing_user_name = itchat.search_mps(name=u'小冰')[0]["UserName"]
 
     peer_list = set()
-    question_timetable = {}
     message_queue = deque()
     current_asker_id_name = None
     last_xiaobing_response_ts = None
