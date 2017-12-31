@@ -139,7 +139,7 @@ def process_message():
         debug_print(u'Was asked to process message but the queue is empty')
         pass
     # if no one has asked xiaobing yet or xiaobing has been idle for 2 sec
-    elif not last_xiaobing_response_ts or (not in_trans and now() - last_xiaobing_response_ts > datetime.timedelta(seconds=2)):
+    elif not last_xiaobing_response_ts or (not in_trans and now() - last_xiaobing_response_ts > datetime.timedelta(seconds=0.6)):
         current_asker_id_name = message_queue.popleft()
         msg = message_hash.pop(current_asker_id_name,None)
         if not msg:
@@ -151,7 +151,7 @@ def process_message():
         in_trans = True
         ask_xiaobing(msg)
     # check back in 1 sec
-    Timer(1, process_message).start()
+    Timer(0.3, process_message).start()
 
 
 
