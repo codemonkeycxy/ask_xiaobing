@@ -14,9 +14,6 @@ WAKEN_MSG = [u"小冰", u"小冰小冰", u"小冰呢", u"小冰呢？", u"小冰
 HIBERNATE_MSG = [u"小冰住嘴", u"小冰闭嘴", u"滚", u"你滚", u"你闭嘴", u"下去吧", u"小冰下去", u"小冰退下"]
 TRIGGER_MSG = WAKEN_MSG + HIBERNATE_MSG
 
-THROTTLE_WINDOW = 5  # sec
-THROTTLE_SLIDER_SIZE = 10  # 10 items per time window
-
 # --------------------------------------------- Handle Friend Chat ---------------------------------------------------
 
 
@@ -66,22 +63,7 @@ def handle_message_queue(msg, from_user):
     from_user_id_name = msg['FromUserName']
     from_user_display_name = get_user_display_name(from_user)
     debug_print(u'Robot reply is on for {}! Adding message to queue...'.format(from_user_display_name))
-
-    if len(message_queue) == 0:
-        debug_print(u'No one has question for xiaobing yet. {} is the first!'.format(from_user_display_name))
-        message_queue.append((from_user_id_name, [msg]))
-    else:
-        last_asker_id_name, last_questions = message_queue[-1]
-        if last_asker_id_name == from_user_id_name:
-            debug_print(u'{} just asked a follow up question'.format(from_user_display_name))
-            last_questions.append(msg)
-        else:
-            last_asker_display_name = get_user_display_name(user_id_name=last_asker_id_name)
-            debug_print(u'{} has a question before {}. Queuing up...'.format(
-                last_asker_display_name,
-                from_user_display_name
-            ))
-            message_queue.append((from_user_id_name, [msg]))
+    message_queue.append(from_user_id_name, msg)
 
 
 def handle_robot_switch(incoming_msg, outgoing_msg_target_user):
@@ -147,10 +129,10 @@ def handle_xiaobing_reply(msg):
 
 
 def process_message():
-    global message_queue, current_asker_id_name, last_xiaobing_response_ts
+    global message_queue, last_xiaobing_response_ts
 
     if len(message_queue) == 0:
-        # debug_print(u'Was asked to process message but the queue is empty')
+        debug_print(u'Was asked to process message but the queue is empty')
         pass
     # if no one has asked xiaobing yet or xiaobing has been idle for 2 sec
     elif not last_xiaobing_response_ts or now() - last_xiaobing_response_ts > datetime.timedelta(seconds=2):
@@ -166,31 +148,6 @@ def process_message():
     Timer(1, process_message).start()
 
 
-def throttle_message(msg, asker_id_name):
-    """ throttle questions rate to avoid flooding wechat """
-    global question_timetable
-
-    if asker_id_name not in question_timetable:
-        # first question, no limit
-        question_timetable[asker_id_name] = deque([now()])
-    else:
-        ts_queue = question_timetable[asker_id_name]
-
-        if len(ts_queue) < THROTTLE_SLIDER_SIZE:
-            # throttle window not full yet, can keep going
-            ts_queue.append(now())
-        else:
-            first_q_ts = question_timetable[asker_id_name][0]
-
-            if now() - first_q_ts > datetime.timedelta(seconds=THROTTLE_WINDOW):
-                # the new question is spaced out wide enough, move the slider and we are good
-                ts_queue.popleft()
-                ts_queue.append(now())
-            else:
-                debug_print(u'{} is trying to ask a question too soon. msg rejected'.format(asker_id_name))
-                return  # IMPORTANT!!! break here so msg is actually sent
-
-    ask_xiaobing(msg)
 
 
 # --------------------------------------------- Helper Functions ---------------------------------------------------
