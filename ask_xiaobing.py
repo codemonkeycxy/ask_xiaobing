@@ -32,7 +32,7 @@ def text_reply(msg):
         handle_incoming_msg(msg, from_user)
 
 
-@itchat.msg_register([TEXT,PICTURE], isGroupChat = True)
+@itchat.msg_register([TEXT, PICTURE], isGroupChat = True)
 def group_reply(msg):
     from_user_name = msg['FromUserName']
     to_user_name = msg['ToUserName']
@@ -76,7 +76,7 @@ def handle_message_queue(msg, from_user):
             from_user_display_name
         ))
 
-    # only register the last question of each unprocessed user
+    # only register the last question of each unprocessed asker
     unprocessed_questions[from_user_id_name] = msg
 
 
@@ -149,13 +149,13 @@ def process_message():
         # debug_print(u'Was asked to process message but the queue is empty')
         pass
     elif is_xiaobing_busy:
-        # skip this round if xiaobing is current busy
+        # skip this round if xiaobing is currently busy
         pass
-    # if no one has asked xiaobing yet or xiaobing has been idle for 2 sec
+    # if no one has asked xiaobing yet or xiaobing has been idle for a period of time
     elif (not last_xiaobing_response_ts or
           now() - last_xiaobing_response_ts > datetime.timedelta(seconds=XIAOBING_IDLENESS_THRESHOLD)):
         current_asker_id_name = asker_queue.popleft()
-        msg = unprocessed_questions[current_asker_id_name]
+        msg = unprocessed_questions.pop(current_asker_id_name, None)
 
         debug_print(u'Xiaobing is available. Asking questions on behalf of {}'.format(
             get_user_display_name(user_id_name=current_asker_id_name)
