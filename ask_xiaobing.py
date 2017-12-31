@@ -173,7 +173,7 @@ def now():
 
 def debug_print(msg):
     if debug:
-        print(msg)
+        print(msg.encode(errors="ignore"))
 
 
 def send_img(msg, user_name):
