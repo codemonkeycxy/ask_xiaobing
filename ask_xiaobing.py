@@ -112,7 +112,7 @@ def handle_robot_switch(incoming_msg, outgoing_msg_target_user):
 # --------------------------------------------- Handle Xiaobing Reply ------------------------------------------------
 
 
-@itchat.msg_register([TEXT, PICTURE], isMpChat=True)
+@itchat.msg_register([TEXT, PICTURE, FRIENDS, CARD, MAP, SHARING, RECORDING, ATTACHMENT, VIDEO], isMpChat=True)
 def map_reply(msg):
     """ relay back xiaobing's response """
     if msg['FromUserName'] == xiao_bing_user_name:
@@ -132,9 +132,13 @@ def handle_xiaobing_reply(msg):
         debug_print(u'Xiaobing replied a picture. Relaying to {}'.format(get_user_display_name(asker)))
         itchat.send_msg(u'小冰: 看图', current_asker_id_name)
         send_img(msg, current_asker_id_name)
-    else:
+    elif msg['Type'] == 'Text':
         debug_print(u'Xiaobing replied {}. Relaying to {}'.format(msg['Text'], get_user_display_name(asker)))
         itchat.send_msg(u'小冰: {}'.format(msg['Text']), current_asker_id_name)
+    else:
+        # gracefully handle unsupported formats with generic reply
+        debug_print(u'Xiaobing replied a {}, which is not yet supported'.format(msg['Type']))
+        itchat.send_msg(u'小冰: 嘤嘤嘤', current_asker_id_name)
 
 
 # ------------------------------------------ Message Queue Processor ------------------------------------------------
