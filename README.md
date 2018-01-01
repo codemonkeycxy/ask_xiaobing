@@ -1,5 +1,6 @@
 # ask_xiaobing
-WeChat bot powered by MS XiaoBing via [itchat](https://github.com/littlecodersh/ItChat) (小冰) 
+WeChat bot powered by MS XiaoBing (小冰) via [itchat](https://github.com/littlecodersh/ItChat) 
+
 一个利用itchat接口制作的微信自动回复机器人
 
 快速入门（非开发者)：
