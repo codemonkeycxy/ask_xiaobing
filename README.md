@@ -15,8 +15,12 @@ WeChat bot powered by MS XiaoBing (小冰) via [itchat](https://github.com/littl
 1. 微信关注小冰公众号
 2. `git clone https://github.com/codemonkeycxy/ask_xiaobing.git`
 3. `brew install python`
-4. `pip install itchat`
-5. 进入ask_xiaobing文件夹并运行`python ask_xiaobing.py`
+4. `pip install virtualenv`
+5. `cd ask_xiaobing`
+6. `virtualenv env`
+7. `. ./env/bin/activate`
+8. `pip install itchat`
+9. `python ask_xiaobing.py`
 
 人机对话：
 
